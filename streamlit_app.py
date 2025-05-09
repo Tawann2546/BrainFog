@@ -169,6 +169,9 @@ st.header("ข้อ 4: คาดการณ์จำนวนเกมให�
 n_years_future = st.slider("เลือกจำนวนปีในอนาคตเพื่อทำนายจำนวนเกม (Publisher)", 1, 5, 5, key="pub_year_slider")
 future_years = list(range(2025, 2025 + n_years_future))
 
+df = df[df['Publisher'] != 'Unknown']  # กรองเฉพาะค่า Missing
+
+
 # เตรียมข้อมูล
 df_filtered = df[['Year_of_Release', 'Publisher']].copy()
 df_filtered = df_filtered.dropna()
