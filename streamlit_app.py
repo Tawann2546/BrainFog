@@ -56,3 +56,35 @@ trend_df = trend_df.sort_values(by='Growth_Trend', ascending=False)
 
 st.subheader("📊 แนวเกมที่มีแนวโน้มเติบโต")
 st.dataframe(trend_df.set_index('Genre').style.format("{:.3f}"))
+
+# ----------------------------
+# 🔢 ข้อ 2: คาดการณ์ยอดขายของแนวเกมแต่ละประเภท แยกตามภูมิภาค
+# ----------------------------
+
+st.markdown("### 🔢 ข้อ 2: คาดการณ์ยอดขายของแนวเกมแต่ละประเภท แยกตามภูมิภาค (ล้านหน่วย)")
+
+# รวมยอดขายต่อแนวเกมในแต่ละ region
+genre_region = df.groupby('Genre')[region_cols].sum().reset_index()
+
+# แปลง Genre เป็นตัวเลข
+genre_region['Genre_encoded'] = le.fit_transform(genre_region['Genre'])
+
+X = genre_region[['Genre_encoded']]
+y = genre_region[region_cols]
+
+model2 = LinearRegression()
+model2.fit(X, y)
+
+# ทำนาย region sales สำหรับแต่ละ genre
+preds = model2.predict(X)
+pred_df = pd.DataFrame(preds, columns=region_cols)
+pred_df['Genre'] = genre_region['Genre']
+pred_df = pred_df.set_index('Genre').round(2)
+
+# แสดงผลแบบตาราง
+st.dataframe(pred_df, use_container_width=True)
+
+# แสดงกราฟเปรียบเทียบแต่ละ Region
+st.markdown("### 📊 ยอดขายแต่ละ Region")
+region_select = st.selectbox("เลือกภูมิภาคที่ต้องการดูกราฟ", region_cols)
+st.bar_chart(pred_df[region_select])
