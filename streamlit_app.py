@@ -61,30 +61,34 @@ st.dataframe(trend_df.set_index('Genre').style.format("{:.3f}"))
 # 🔢 ข้อ 2: คาดการณ์ยอดขายของแนวเกมแต่ละประเภท แยกตามภูมิภาค
 # ----------------------------
 
-st.markdown("### 🔢 ข้อ 2: คาดการณ์ยอดขายของแนวเกมแต่ละประเภท แยกตามภูมิภาค (ล้านหน่วย)")
+# ✅ ประกาศคอลัมน์ภูมิภาคที่ใช้ในการทำนาย
+region_cols = ['NA_Sales', 'EU_Sales', 'JP_Sales', 'Other_Sales']
 
-# รวมยอดขายต่อแนวเกมในแต่ละ region
-genre_region = df.groupby('Genre')[region_cols].sum().reset_index()
+with st.container():
+    st.markdown("## 🧩 ข้อ 2: คาดการณ์ยอดขายของแนวเกมแต่ละประเภท แยกตามภูมิภาค (ล้านหน่วย)")
 
-# แปลง Genre เป็นตัวเลข
-genre_region['Genre_encoded'] = le.fit_transform(genre_region['Genre'])
+    # รวมยอดขายต่อแนวเกมในแต่ละ region
+    genre_region = df.groupby('Genre')[region_cols].sum().reset_index()
 
-X = genre_region[['Genre_encoded']]
-y = genre_region[region_cols]
+    # แปลง Genre เป็นตัวเลข
+    le = LabelEncoder()
+    genre_region['Genre_encoded'] = le.fit_transform(genre_region['Genre'])
 
-model2 = LinearRegression()
-model2.fit(X, y)
+    X = genre_region[['Genre_encoded']]
+    y = genre_region[region_cols]
 
-# ทำนาย region sales สำหรับแต่ละ genre
-preds = model2.predict(X)
-pred_df = pd.DataFrame(preds, columns=region_cols)
-pred_df['Genre'] = genre_region['Genre']
-pred_df = pred_df.set_index('Genre').round(2)
+    model2 = LinearRegression()
+    model2.fit(X, y)
 
-# แสดงผลแบบตาราง
-st.dataframe(pred_df, use_container_width=True)
+    # ทำนาย region sales สำหรับแต่ละ genre
+    preds = model2.predict(X)
+    pred_df = pd.DataFrame(preds, columns=region_cols)
+    pred_df['Genre'] = genre_region['Genre']
 
-# แสดงกราฟเปรียบเทียบแต่ละ Region
-st.markdown("### 📊 ยอดขายแต่ละ Region")
-region_select = st.selectbox("เลือกภูมิภาคที่ต้องการดูกราฟ", region_cols)
-st.bar_chart(pred_df[region_select])
+    # แสดงตารางผลลัพธ์
+    st.dataframe(pred_df.set_index('Genre').round(2))
+
+    # แสดงกราฟแท่ง stacked
+    st.markdown("### 📊 กราฟเปรียบเทียบยอดขายแต่ละแนวเกมในแต่ละภูมิภาค")
+    chart_data = pred_df.set_index('Genre')[region_cols].round(2)
+    st.bar_chart(chart_data)
