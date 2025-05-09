@@ -68,6 +68,12 @@ region_cols = ['NA_Sales', 'EU_Sales', 'JP_Sales', 'Other_Sales']
 with st.container():
     st.markdown("## 🧩 ข้อ 2: คาดการณ์ยอดขายของแนวเกมแต่ละประเภท แยกตามภูมิภาค (ล้านหน่วย)")
 
+    st.markdown("📅 **เลือกจำนวนปีในอนาคตที่ต้องการทำนาย**")
+n_years_region = st.slider("", 1, 5, 3)
+future_years_region = pd.DataFrame({
+    'Year_of_Release': np.repeat(np.arange(2017, 2017 + n_years_region), len(df['Genre'].unique())),
+    'Genre': np.tile(df['Genre'].unique(), n_years_region)
+})
     # รวมยอดขายต่อแนวเกมในแต่ละ region
     genre_region = df.groupby('Genre')[region_cols].sum().reset_index()
 
