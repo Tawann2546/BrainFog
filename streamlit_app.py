@@ -58,26 +58,26 @@ trend_df = trend_df.sort_values(by='Growth_Trend', ascending=False)
 st.dataframe(trend_df.set_index('Genre').style.format("{:.3f}"))
 
 # ----------------------------
-# 🔢 ข้อ 2: คาดการณ์ยอดขายของแนวเกมแต่ละประเภท แยกตามภูมิภาค
+# ข้อ 2: คาดการณ์ยอดขายของแนวเกมแต่ละประเภท แยกตามภูมิภาค
 # ----------------------------
 
-# ✅ ประกาศคอลัมน์ภูมิภาคที่ใช้ในการทำนาย
+# ประกาศคอลัมน์ภูมิภาคที่ใช้ในการทำนาย
 region_cols = ['NA_Sales', 'EU_Sales', 'JP_Sales', 'Other_Sales']
 
 with st.container():
     st.title("ข้อ 2: คาดการณ์ยอดขายของแนวเกมแต่ละประเภท แยกตามภูมิภาค (ล้านหน่วย)")
 
-    # ✅ UI ให้ผู้ใช้เลือกจำนวนปีที่ต้องการทำนาย
+    # UI ให้ผู้ใช้เลือกจำนวนปีที่ต้องการทำนาย
     st.markdown("เลือกจำนวนปีในอนาคตที่ต้องการทำนาย")
     predict_years = st.slider(" ", 1, 5, 3, key="region_years")
     future_years = list(range(2017, 2017 + predict_years))
 
-    # ✅ รวมยอดขายแนวเกมต่อปี
+    # รวมยอดขายแนวเกมต่อปี
     genre_region_year = df.groupby(['Year_of_Release', 'Genre'])[region_cols].sum().reset_index()
     last_year = genre_region_year['Year_of_Release'].max()
     latest_sales = genre_region_year[genre_region_year['Year_of_Release'] == last_year].copy()
 
-    # ✅ สร้างข้อมูลยอดขายจำลองสำหรับปีอนาคต
+    # สร้างข้อมูลยอดขายจำลองสำหรับปีอนาคต
     future_data = []
     for year in future_years:
         temp = latest_sales.copy()
@@ -85,34 +85,34 @@ with st.container():
         future_data.append(temp)
     future_df = pd.concat(future_data, ignore_index=True)
 
-    # ✅ รวมอดีตและอนาคต
+    # รวมอดีตและอนาคต
     all_region_data = pd.concat([genre_region_year, future_df], ignore_index=True)
     all_region_sales = all_region_data.groupby('Genre')[region_cols].sum().reset_index()
 
-    # ✅ แปลง Genre เป็นตัวเลข
+    # แปลง Genre เป็นตัวเลข
     le = LabelEncoder()
     all_region_sales['Genre_encoded'] = le.fit_transform(all_region_sales['Genre'])
 
-    # ✅ เทรนโมเดลใหม่
+    # เทรนโมเดลใหม่
     X = all_region_sales[['Genre_encoded']]
     y = all_region_sales[region_cols]
     model2 = LinearRegression()
     model2.fit(X, y)
 
-    # ✅ ทำนาย
+    # ทำนาย
     preds = model2.predict(X)
     pred_df = pd.DataFrame(preds, columns=region_cols)
     pred_df['Genre'] = all_region_sales['Genre']
 
-    # ✅ แสดงตารางผลลัพธ์
+    # แสดงตารางผลลัพธ์
     st.dataframe(pred_df.set_index('Genre').round(2))
 
-    # ✅ แสดงกราฟแท่ง stacked
+    # แสดงกราฟแท่ง stacked
     st.markdown("กราฟเปรียบเทียบยอดขายแต่ละแนวเกมในแต่ละภูมิภาค")
     st.bar_chart(pred_df.set_index('Genre')[region_cols].round(2))
 
 # ----------------------------
-# 🔮 ข้อ 3: ความสัมพันธ์ของ Publisher กับยอดขายในอนาคต
+# ข้อ 3: ความสัมพันธ์ของ Publisher กับยอดขายในอนาคต
 # ----------------------------
 
 st.title("ข้อ 3: ความสัมพันธ์ของ Publisher กับยอดขายในอนาคต")
@@ -120,15 +120,15 @@ st.title("ข้อ 3: ความสัมพันธ์ของ Publisher �
 # UI: เลือกจำนวนปีล่วงหน้า
 n_years_pub = st.slider("เลือกจำนวนปีในอนาคตเพื่อพยากรณ์ยอดขาย (Publisher)", 1, 5, 5)
 
-# ✅ เตรียมข้อมูล
+# เตรียมข้อมูล
 df_pub = df[['Year_of_Release', 'Publisher', 'Global_Sales']].dropna()
 df_pub['Year_of_Release'] = df_pub['Year_of_Release'].astype(int)
 df_pub = df_pub[df_pub['Year_of_Release'] >= 2010]
 
-# ✅ รวมยอดขายของแต่ละ Publisher ต่อปี
+# รวมยอดขายของแต่ละ Publisher ต่อปี
 pub_sales = df_pub.groupby(['Year_of_Release', 'Publisher'])['Global_Sales'].sum().reset_index()
 
-# ✅ วนลูปเทรน + พยากรณ์
+# วนลูปเทรน + พยากรณ์
 future_predictions = []
 for pub in pub_sales['Publisher'].unique():
     subset = pub_sales[pub_sales['Publisher'] == pub]
@@ -143,14 +143,62 @@ for pub in pub_sales['Publisher'].unique():
             pred = model.predict(pd.DataFrame({'Year_of_Release': [year]}))[0]
             future_predictions.append((pub, year, pred))
 
-# ✅ สรุปผลลัพธ์
+# สรุปผลลัพธ์
 future_df = pd.DataFrame(future_predictions, columns=['Publisher', 'Year', 'Predicted_Sales'])
 publisher_summary = future_df.groupby('Publisher')['Predicted_Sales'].sum().reset_index()
 publisher_summary = publisher_summary.sort_values(by='Predicted_Sales', ascending=False).head(10)
 
-# ✅ แสดงผล
+# แสดงผล
 st.subheader(f"10 อันดับ Publisher ที่คาดว่าจะมียอดขายรวมสูงสุดใน {n_years_pub} ปีข้างหน้า")
 st.dataframe(publisher_summary.set_index('Publisher').round(2))
 
-# ✅ กราฟ
+# กราฟ
 st.bar_chart(publisher_summary.set_index('Publisher'))
+
+# ----------------------------
+# 🧮 ข้อ 4: คาดการณ์จำนวนเกมใหม่ของแต่ละค่ายเกม
+# ----------------------------
+
+st.header("ข้อ 4: คาดการณ์จำนวนเกมใหม่ของแต่ละค่ายเกมในอนาคต")
+
+# 🧹 เตรียมข้อมูล
+publisher_year = df[['Year_of_Release', 'Publisher']].dropna()
+publisher_year['Year_of_Release'] = publisher_year['Year_of_Release'].astype(int)
+
+# 🔢 รวมจำนวนเกมต่อ Publisher ต่อปี
+game_counts = publisher_year.groupby(['Year_of_Release', 'Publisher']).size().reset_index(name='Game_Count')
+
+# 🔠 Encode publisher
+le_pub = LabelEncoder()
+game_counts['Publisher_encoded'] = le_pub.fit_transform(game_counts['Publisher'])
+
+# 🚀 Train model
+X = game_counts[['Year_of_Release', 'Publisher_encoded']]
+y = game_counts['Game_Count']
+model = LinearRegression()
+model.fit(X, y)
+
+# 📅 UI รับจำนวนปี
+n_years_future = st.slider("เลือกจำนวนปีในอนาคตที่ต้องการทำนาย (Publisher)", 1, 5, 5, key="pub_years")
+future_years = np.arange(2017, 2017 + n_years_future)
+top_publishers = game_counts['Publisher_encoded'].value_counts().head(10).index  # จำกัดแค่ 10 ค่ายที่มีข้อมูลมากสุด
+
+# 🔮 สร้างข้อมูลอนาคต
+future_input = pd.DataFrame({
+    'Year_of_Release': np.repeat(future_years, len(top_publishers)),
+    'Publisher_encoded': np.tile(top_publishers, len(future_years))
+})
+future_input['Predicted_Games'] = model.predict(future_input)
+
+# 🔁 คืนชื่อ Publisher
+future_input['Publisher'] = le_pub.inverse_transform(future_input['Publisher_encoded'])
+
+# 📊 สรุปยอดรวมต่อ Publisher
+publisher_forecast = future_input.groupby('Publisher')['Predicted_Games'].sum().reset_index()
+publisher_forecast = publisher_forecast.sort_values(by='Predicted_Games', ascending=False)
+
+# ✅ แสดงผล
+st.subheader(f"📦 ค่ายเกมที่คาดว่าจะผลิตเกมมากที่สุดใน {n_years_future} ปีข้างหน้า")
+st.dataframe(publisher_forecast.set_index('Publisher').round(0))
+st.bar_chart(publisher_forecast.set_index('Publisher'))
+
