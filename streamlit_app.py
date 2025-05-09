@@ -164,7 +164,7 @@ st.bar_chart(publisher_summary.set_index('Publisher'))
 #  ข้อ 4: คาดการณ์จำนวนเกมใหม่ของแต่ละค่ายเกมในอนาคต (ด้วย XGBoost + UI)
 # ----------------------------
 
-st.header("ข้อ 4: คาดการณ์จำนวนเกมใหม่ของแต่ละค่ายเกมในอนาคตxxx")
+st.header("ข้อ 4: คาดการณ์จำนวนเกมใหม่ของแต่ละค่ายเกมในอนาคต")
 
 n_years_future = st.slider("เลือกจำนวนปีในอนาคตเพื่อทำนายจำนวนเกม (Publisher)", 1, 5, 5, key="pub_year_slider")
 future_years = list(range(2025, 2025 + n_years_future))
@@ -192,7 +192,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 
 # สร้างโมเดล + Hyperparameter Tuning
 param_grid = {
-    'n_estimators': [5],
+    'n_estimators': [10],
     'max_depth': [2],
     'learning_rate': [0.05],
     'subsample': [0.8],
