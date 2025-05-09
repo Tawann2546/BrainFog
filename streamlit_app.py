@@ -123,7 +123,7 @@ with st.container():
 st.title("ข้อ 3: ความสัมพันธ์ของ Publisher กับยอดขายในอนาคต")
 
 # UI: เลือกจำนวนปีล่วงหน้า
-n_years_pub = st.slider("เลือกจำนวนปีในอนาคตเพื่อพยากรณ์ยอดขาย (Publisher)", 1, 5, 5)
+n_years_pub = st.slider("เลือกจำนวนปีในอนาคตเพื่อพยากรณ์ยอดขาย ", 1, 5, 5)
 
 # เตรียมข้อมูล
 df_pub = df[['Year_of_Release', 'Publisher', 'Global_Sales']].dropna()
