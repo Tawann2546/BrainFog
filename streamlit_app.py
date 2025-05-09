@@ -11,6 +11,8 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split, GridSearchCV
+from xgboost import XGBRegressor
+
 
 
 
