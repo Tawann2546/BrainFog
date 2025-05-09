@@ -189,7 +189,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_
 
 # สร้างโมเดล + Hyperparameter Tuning
 param_grid = {
-    'n_estimators': [30],
+    'n_estimators': [20],
     'max_depth': [3],
     'learning_rate': [0.1],
     'subsample': [1.0],
