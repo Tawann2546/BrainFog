@@ -1,55 +1,66 @@
+# streamlit_app.py
 import streamlit as st
 import pandas as pd
 import numpy as np
-from xgboost import XGBRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
+from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import LabelEncoder
 
-# ---------- โหลดข้อมูล ----------
-@st.cache_data
-def load_data():
-    df = pd.read_csv("Video_Game_Sales_as_at_22_Dec_2016.csv")
-    return df
+# === 1. Load and clean data ===
+df = pd.read_csv("Video_Games_Sales_as_at_22_Dec_2016.csv")
+df = df.dropna(subset=['Year_of_Release', 'Genre', 'Global_Sales', 'Publisher', 'Platform'])
+df['Year_of_Release'] = df['Year_of_Release'].astype(int)
 
-df = load_data()
+region_cols = ['NA_Sales', 'EU_Sales', 'JP_Sales', 'Other_Sales']
+df[region_cols] = df[region_cols].fillna(0)
 
-# ---------- UI ----------
-st.title("🎮 Video Game Sales Prediction")
-years_to_predict = st.slider("📅 เลือกจำนวนปีล่วงหน้า", 1, 5, 3)
+# === 2. Prepare genre_year for training ===
+genre_year = df.groupby(['Year_of_Release', 'Genre'])['Global_Sales'].sum().reset_index()
 
-# ---------- เตรียมข้อมูล ----------
-df_pub = df[['Year_of_Release', 'Publisher', 'Global_Sales']].dropna()
-df_pub = df_pub[df_pub['Year_of_Release'].between(2010, 2016)]
-df_pub['Year_of_Release'] = df_pub['Year_of_Release'].astype(int)
+# Encode genre
+genre_le = LabelEncoder()
+genre_year['Genre_encoded'] = genre_le.fit_transform(genre_year['Genre'])
 
-pub_sales = df_pub.groupby(['Year_of_Release', 'Publisher'])['Global_Sales'].sum().reset_index()
+# Train model to predict global sales by year and genre
+X = genre_year[['Year_of_Release', 'Genre_encoded']]
+y = genre_year['Global_Sales']
 
-# ---------- Encode Publisher ----------
-le = LabelEncoder()
-pub_sales['Publisher_encoded'] = le.fit_transform(pub_sales['Publisher'])
-
-X = pub_sales[['Year_of_Release', 'Publisher_encoded']]
-y = pub_sales['Global_Sales']
-
-# ---------- Train Model ----------
-model = XGBRegressor(n_estimators=50, learning_rate=0.1, max_depth=3, random_state=42)
+model = LinearRegression()
 model.fit(X, y)
 
-# ---------- Predict ----------
-future_years = list(range(2017, 2017 + years_to_predict))
-unique_pubs = pub_sales['Publisher_encoded'].unique()
-
-future_df = pd.DataFrame({
-    'Year_of_Release': np.repeat(future_years, len(unique_pubs)),
-    'Publisher_encoded': np.tile(unique_pubs, len(future_years))
+# Predict future years 2025–2030
+future_years = pd.DataFrame({
+    'Year_of_Release': np.repeat(np.arange(2025, 2031), len(genre_le.classes_)),
+    'Genre_encoded': np.tile(np.arange(len(genre_le.classes_)), 6)
 })
-future_df['Predicted_Sales'] = model.predict(future_df)
-future_df['Publisher'] = le.inverse_transform(future_df['Publisher_encoded'])
+future_years['Genre'] = genre_le.inverse_transform(future_years['Genre_encoded'])
+future_years['Predicted_Sales'] = model.predict(future_years[['Year_of_Release', 'Genre_encoded']])
 
-summary = future_df.groupby('Publisher')['Predicted_Sales'].sum().reset_index()
-summary = summary.sort_values(by='Predicted_Sales', ascending=False)
+# === 3. UI for Genre Trend Prediction ===
+st.title("🎮 คาดการณ์แนวเกมที่จะมาแรงในอนาคต")
 
-# ---------- แสดงผล ----------
-st.subheader(f"📊 ยอดขายรวมที่คาดว่าจะเกิดขึ้นในปี 2017–{2016 + years_to_predict}")
-st.dataframe(summary.head(10))
+# Combine historical + predicted data
+genre_all_years = pd.concat([
+    genre_year[['Year_of_Release', 'Genre', 'Global_Sales']],
+    future_years.rename(columns={'Predicted_Sales': 'Global_Sales'})[['Year_of_Release', 'Genre', 'Global_Sales']]
+])
+
+# Calculate growth trend (slope) for each genre
+growth_results = []
+for genre in genre_all_years['Genre'].unique():
+    subset = genre_all_years[genre_all_years['Genre'] == genre]
+    X = subset[['Year_of_Release']]
+    y = subset['Global_Sales']
+    model = LinearRegression()
+    model.fit(X, y)
+    slope = model.coef_[0]
+    growth_results.append((genre, slope))
+
+trend_df = pd.DataFrame(growth_results, columns=['Genre', 'Growth_Trend'])
+trend_df = trend_df.sort_values(by='Growth_Trend', ascending=False)
+
+st.subheader("📈 แนวเกมที่มีแนวโน้มเพิ่มขึ้น (2025–2030 + อดีต)")
+st.dataframe(trend_df, use_container_width=True)
+
+# Optional chart
+top_n = st.slider("📊 เลือกจำนวนแนวเกมที่จะแสดงในกราฟ", min_value=1, max_value=10, value=5)
+st.bar_chart(trend_df.head(top_n).set_index('Genre'))
