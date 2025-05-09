@@ -112,7 +112,7 @@ with st.container():
     st.markdown("### 📊 กราฟเปรียบเทียบยอดขายแต่ละแนวเกมในแต่ละภูมิภาค")
     st.bar_chart(pred_df.set_index('Genre')[region_cols].round(2))
 
-    # ----------------------------
+# ----------------------------
 # 🔮 ข้อ 3: ความสัมพันธ์ของ Publisher กับยอดขายในอนาคต
 # ----------------------------
 
@@ -147,12 +147,11 @@ for pub in pub_sales['Publisher'].unique():
 # ✅ สรุปผลลัพธ์
 future_df = pd.DataFrame(future_predictions, columns=['Publisher', 'Year', 'Predicted_Sales'])
 publisher_summary = future_df.groupby('Publisher')['Predicted_Sales'].sum().reset_index()
-publisher_summary = publisher_summary.sort_values(by='Predicted_Sales', ascending=False)
+publisher_summary = publisher_summary.sort_values(by='Predicted_Sales', ascending=False).head(10)
 
 # ✅ แสดงผล
-st.subheader(f"📊 Publisher ที่คาดว่าจะมียอดขายรวมสูงสุดใน {n_years_pub} ปีข้างหน้า")
+st.subheader(f"📊 10 อันดับ Publisher ที่คาดว่าจะมียอดขายรวมสูงสุดใน {n_years_pub} ปีข้างหน้า")
 st.dataframe(publisher_summary.set_index('Publisher').round(2))
 
 # ✅ กราฟ
-st.bar_chart(publisher_summary.set_index('Publisher').head(10))
-
+st.bar_chart(publisher_summary.set_index('Publisher'))
