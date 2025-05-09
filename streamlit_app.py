@@ -68,34 +68,46 @@ region_cols = ['NA_Sales', 'EU_Sales', 'JP_Sales', 'Other_Sales']
 with st.container():
     st.markdown("## 🧩 ข้อ 2: คาดการณ์ยอดขายของแนวเกมแต่ละประเภท แยกตามภูมิภาค (ล้านหน่วย)")
 
-    st.markdown("📅 **เลือกจำนวนปีในอนาคตที่ต้องการทำนาย**")
-n_years_region = st.slider("", 1, 5, 3)
-future_years_region = pd.DataFrame({
-    'Year_of_Release': np.repeat(np.arange(2017, 2017 + n_years_region), len(df['Genre'].unique())),
-    'Genre': np.tile(df['Genre'].unique(), n_years_region)
-})
-    # รวมยอดขายต่อแนวเกมในแต่ละ region
-    genre_region = df.groupby('Genre')[region_cols].sum().reset_index()
+    # ✅ UI ให้ผู้ใช้เลือกจำนวนปีที่ต้องการทำนาย
+    st.markdown("### 🗓️ เลือกจำนวนปีในอนาคตที่ต้องการทำนาย")
+    predict_years = st.slider(" ", 1, 5, 3, key="region_years")
+    future_years = list(range(2017, 2017 + predict_years))
 
-    # แปลง Genre เป็นตัวเลข
+    # ✅ รวมยอดขายแนวเกมต่อปี
+    genre_region_year = df.groupby(['Year_of_Release', 'Genre'])[region_cols].sum().reset_index()
+    last_year = genre_region_year['Year_of_Release'].max()
+    latest_sales = genre_region_year[genre_region_year['Year_of_Release'] == last_year].copy()
+
+    # ✅ สร้างข้อมูลยอดขายจำลองสำหรับปีอนาคต
+    future_data = []
+    for year in future_years:
+        temp = latest_sales.copy()
+        temp['Year_of_Release'] = year
+        future_data.append(temp)
+    future_df = pd.concat(future_data, ignore_index=True)
+
+    # ✅ รวมอดีตและอนาคต
+    all_region_data = pd.concat([genre_region_year, future_df], ignore_index=True)
+    all_region_sales = all_region_data.groupby('Genre')[region_cols].sum().reset_index()
+
+    # ✅ แปลง Genre เป็นตัวเลข
     le = LabelEncoder()
-    genre_region['Genre_encoded'] = le.fit_transform(genre_region['Genre'])
+    all_region_sales['Genre_encoded'] = le.fit_transform(all_region_sales['Genre'])
 
-    X = genre_region[['Genre_encoded']]
-    y = genre_region[region_cols]
-
+    # ✅ เทรนโมเดลใหม่
+    X = all_region_sales[['Genre_encoded']]
+    y = all_region_sales[region_cols]
     model2 = LinearRegression()
     model2.fit(X, y)
 
-    # ทำนาย region sales สำหรับแต่ละ genre
+    # ✅ ทำนาย
     preds = model2.predict(X)
     pred_df = pd.DataFrame(preds, columns=region_cols)
-    pred_df['Genre'] = genre_region['Genre']
+    pred_df['Genre'] = all_region_sales['Genre']
 
-    # แสดงตารางผลลัพธ์
+    # ✅ แสดงตารางผลลัพธ์
     st.dataframe(pred_df.set_index('Genre').round(2))
 
-    # แสดงกราฟแท่ง stacked
+    # ✅ แสดงกราฟแท่ง stacked
     st.markdown("### 📊 กราฟเปรียบเทียบยอดขายแต่ละแนวเกมในแต่ละภูมิภาค")
-    chart_data = pred_df.set_index('Genre')[region_cols].round(2)
-    st.bar_chart(chart_data)
+    st.bar_chart(pred_df.set_index('Genre')[region_cols].round(2))
