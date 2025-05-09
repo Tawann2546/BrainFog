@@ -161,7 +161,7 @@ st.dataframe(publisher_summary.set_index('Publisher').round(2))
 st.bar_chart(publisher_summary.set_index('Publisher'))
 
 # ----------------------------
-# 🎮 ข้อ 4: คาดการณ์จำนวนเกมใหม่ของแต่ละค่ายเกมในอนาคต (ด้วย XGBoost + UI)
+#  ข้อ 4: คาดการณ์จำนวนเกมใหม่ของแต่ละค่ายเกมในอนาคต (ด้วย XGBoost + UI)
 # ----------------------------
 
 st.header("ข้อ 4: คาดการณ์จำนวนเกมใหม่ของแต่ละค่ายเกมในอนาคต")
@@ -169,27 +169,27 @@ st.header("ข้อ 4: คาดการณ์จำนวนเกมให�
 n_years_future = st.slider("เลือกจำนวนปีในอนาคตเพื่อทำนายจำนวนเกม (Publisher)", 1, 5, 5, key="pub_year_slider")
 future_years = list(range(2025, 2025 + n_years_future))
 
-# ✅ เตรียมข้อมูล
+# เตรียมข้อมูล
 df_filtered = df[['Year_of_Release', 'Publisher']].copy()
 df_filtered = df_filtered.dropna()
 df_filtered['Year_of_Release'] = df_filtered['Year_of_Release'].astype(int)
 df_filtered = df_filtered[(df_filtered['Year_of_Release'] >= 2010) & (df_filtered['Year_of_Release'] <= 2016)]
 
-# ✅ สร้างตารางจำนวนเกมต่อค่ายต่อปี
+# สร้างตารางจำนวนเกมต่อค่ายต่อปี
 publisher_year = df_filtered.groupby(['Year_of_Release', 'Publisher']).size().reset_index(name='Game_Count')
 
-# ✅ เข้ารหัส Publisher
+# เข้ารหัส Publisher
 publisher_le = LabelEncoder()
 publisher_year['Publisher_encoded'] = publisher_le.fit_transform(publisher_year['Publisher'])
 
-# ✅ เตรียมข้อมูลเทรน
+# เตรียมข้อมูลเทรน
 X = publisher_year[['Year_of_Release', 'Publisher_encoded']]
 y = publisher_year['Game_Count']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# ✅ สร้างโมเดล + Hyperparameter Tuning
+# สร้างโมเดล + Hyperparameter Tuning
 param_grid = {
-    'n_estimators': [100],
+    'n_estimators': [30],
     'max_depth': [3],
     'learning_rate': [0.1],
     'subsample': [1.0],
@@ -205,7 +205,7 @@ grid_search = GridSearchCV(
 grid_search.fit(X_train, y_train)
 best_model = grid_search.best_estimator_
 
-# ✅ ทำนายจำนวนเกมในอนาคต
+# ทำนายจำนวนเกมในอนาคต
 top_publishers = publisher_year['Publisher_encoded'].value_counts().index[:10]
 future_pub = pd.DataFrame({
     'Year_of_Release': np.repeat(future_years, len(top_publishers)),
@@ -214,13 +214,13 @@ future_pub = pd.DataFrame({
 future_pub['Predicted_Games'] = best_model.predict(future_pub)
 future_pub['Publisher'] = publisher_le.inverse_transform(future_pub['Publisher_encoded'])
 
-# ✅ สรุปผล
+# สรุปผล
 publisher_total_games = future_pub.groupby('Publisher')['Predicted_Games'].sum().reset_index()
 publisher_total_games.columns = ['Publisher', 'Total_Predicted_Games']
 publisher_total_games = publisher_total_games.sort_values(by='Total_Predicted_Games', ascending=False).head(10)
 
-# ✅ แสดงผล
-st.subheader(f"🎯 10 อันดับ Publisher ที่คาดว่าจะออกเกมมากที่สุดใน {n_years_future} ปีข้างหน้า")
+# แสดงผล
+st.subheader(f" 10 อันดับ Publisher ที่คาดว่าจะออกเกมมากที่สุดใน {n_years_future} ปีข้างหน้า")
 st.dataframe(publisher_total_games.set_index('Publisher').round(0))
 st.bar_chart(publisher_total_games.set_index('Publisher'))
 
