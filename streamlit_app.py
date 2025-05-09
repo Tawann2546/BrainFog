@@ -6,7 +6,14 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import LabelEncoder
 
 # === 1. Load and clean data ===
-df = pd.read_csv("Video_Games_Sales_as_at_22_Dec_2016.csv")
+import os
+
+@st.cache_data
+def load_data():
+    csv_path = os.path.join(os.path.dirname(__file__), "Video_Games_Sales_as_at_22_Dec_2016.csv")
+    return pd.read_csv(csv_path)
+
+df = load_data()
 df = df.dropna(subset=['Year_of_Release', 'Genre', 'Global_Sales', 'Publisher', 'Platform'])
 df['Year_of_Release'] = df['Year_of_Release'].astype(int)
 
