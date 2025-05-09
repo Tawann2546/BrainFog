@@ -66,7 +66,7 @@ st.dataframe(trend_df.set_index('Genre').style.format("{:.3f}"))
 region_cols = ['NA_Sales', 'EU_Sales', 'JP_Sales', 'Other_Sales']
 
 with st.container():
-    st.markdown("##ข้อ 2: คาดการณ์ยอดขายของแนวเกมแต่ละประเภท แยกตามภูมิภาค (ล้านหน่วย)")
+    st.title("ข้อ 2: คาดการณ์ยอดขายของแนวเกมแต่ละประเภท แยกตามภูมิภาค (ล้านหน่วย)")
 
     # ✅ UI ให้ผู้ใช้เลือกจำนวนปีที่ต้องการทำนาย
     st.markdown("###เลือกจำนวนปีในอนาคตที่ต้องการทำนาย")
