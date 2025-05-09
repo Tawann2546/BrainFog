@@ -1,7 +1,7 @@
 import streamlit as st
 st.set_page_config(page_title='BrainFog', layout='wide')
 st.markdown("""
-<h1 style='text-align: left; font-size: 60px;'>🧠 BrainFog 🌬️</h1>
+<h1 style='text-align: left; font-size: 50px;'>🧠 BrainFog 🌬️</h1>
 """, unsafe_allow_html=True)
 
 
