@@ -111,3 +111,48 @@ with st.container():
     # ✅ แสดงกราฟแท่ง stacked
     st.markdown("### 📊 กราฟเปรียบเทียบยอดขายแต่ละแนวเกมในแต่ละภูมิภาค")
     st.bar_chart(pred_df.set_index('Genre')[region_cols].round(2))
+
+    # ----------------------------
+# 🔮 ข้อ 3: ความสัมพันธ์ของ Publisher กับยอดขายในอนาคต
+# ----------------------------
+
+st.header("ข้อ 3: ความสัมพันธ์ของ Publisher กับยอดขายในอนาคต")
+
+# 📅 UI: เลือกจำนวนปีล่วงหน้า
+n_years_pub = st.slider("เลือกจำนวนปีในอนาคตเพื่อพยากรณ์ยอดขาย (Publisher)", 1, 5, 5)
+
+# ✅ เตรียมข้อมูล
+df_pub = df[['Year_of_Release', 'Publisher', 'Global_Sales']].dropna()
+df_pub['Year_of_Release'] = df_pub['Year_of_Release'].astype(int)
+df_pub = df_pub[df_pub['Year_of_Release'] >= 2010]
+
+# ✅ รวมยอดขายของแต่ละ Publisher ต่อปี
+pub_sales = df_pub.groupby(['Year_of_Release', 'Publisher'])['Global_Sales'].sum().reset_index()
+
+# ✅ วนลูปเทรน + พยากรณ์
+future_predictions = []
+for pub in pub_sales['Publisher'].unique():
+    subset = pub_sales[pub_sales['Publisher'] == pub]
+    X = subset[['Year_of_Release']]
+    y = subset['Global_Sales']
+
+    if len(X) >= 3:
+        model = LinearRegression()
+        model.fit(X, y)
+
+        for year in range(2025, 2025 + n_years_pub):
+            pred = model.predict(pd.DataFrame({'Year_of_Release': [year]}))[0]
+            future_predictions.append((pub, year, pred))
+
+# ✅ สรุปผลลัพธ์
+future_df = pd.DataFrame(future_predictions, columns=['Publisher', 'Year', 'Predicted_Sales'])
+publisher_summary = future_df.groupby('Publisher')['Predicted_Sales'].sum().reset_index()
+publisher_summary = publisher_summary.sort_values(by='Predicted_Sales', ascending=False)
+
+# ✅ แสดงผล
+st.subheader(f"📊 Publisher ที่คาดว่าจะมียอดขายรวมสูงสุดใน {n_years_pub} ปีข้างหน้า")
+st.dataframe(publisher_summary.set_index('Publisher').round(2))
+
+# ✅ กราฟ
+st.bar_chart(publisher_summary.set_index('Publisher').head(10))
+
